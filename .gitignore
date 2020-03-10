@@ -81,6 +81,9 @@ target/
 profile_default/
 ipython_config.py
 
+# vscode
+.vscode
+
 # pyenv
 .python-version
 
@@ -127,3 +130,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# 
+ex1.py 
