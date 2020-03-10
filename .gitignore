@@ -133,3 +133,13 @@ dmypy.json
 
 # 
 ex1.py 
+reserved
+
+# 
+RNN
+DAE 
+GRU 
+Seq2Point
+Seq2Seq
+*.h5
+*.hdf5
