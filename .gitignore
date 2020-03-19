@@ -143,3 +143,4 @@ Seq2Point
 Seq2Seq
 *.h5
 *.hdf5
+*.csv
