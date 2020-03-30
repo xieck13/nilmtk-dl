@@ -131,8 +131,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# 
-ex1.py 
+#
 reserved
 
 # 
