@@ -293,7 +293,7 @@ class API():
         for i in gt_overall.columns:
             temp_result = copy.deepcopy(config['result'])
             plt.figure()
-            if (self.isState == False):
+            if not self.isState:
                 plt.plot(test_mains, label='Mains reading')
             plt.plot(gt_overall[i], label='Truth')
             for clf in pred_overall:
