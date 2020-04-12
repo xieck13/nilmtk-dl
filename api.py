@@ -97,7 +97,7 @@ class API():
                 self.train_jointly(clf, d)
 
             print("Finished training for ", clf.MODEL_NAME)
-            # clear_output()
+            clear_output()
 
         d = self.test_datasets_dict
 
