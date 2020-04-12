@@ -147,6 +147,8 @@ class WindowGRU(Disaggregator):
 
         test_predictions = []
         for test_main in test_main_list:
+            # if(test_main.shape[0] < 100):
+            #     continue
             test_main = test_main.values
             test_main = test_main.reshape((-1, self.sequence_length, 1))
             disggregation_dict = {}

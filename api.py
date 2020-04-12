@@ -13,6 +13,7 @@ from IPython.display import clear_output
 from metrics import Metrics
 from disaggregate import config, get_activations, get_sections_df
 import copy
+import joblib
 
 
 class API():
@@ -224,6 +225,8 @@ class API():
         new_appliances_list = appliance_readings.copy()
         for j, mains_df in enumerate(mains_list):
             mains_df = mains_df.dropna()
+            # if mains_df.shape[0] < 10:
+            #     continue
             for i in range(len(appliance_readings)):
                 appliance_readings[i][j] = appliance_readings[i][j].dropna()
             ix = mains_df.index
@@ -232,6 +235,15 @@ class API():
             new_main_list[j] = mains_df.loc[ix]
             for i, app_df in enumerate(appliance_readings):
                 new_appliances_list[i][j] = app_df[j].loc[ix]
+        j = 0
+        while (j < len(new_main_list)):
+            if (new_main_list[j].shape[0] < 10):
+                del new_main_list[j]
+                for i in range(len(new_appliances_list)):
+                    del new_appliances_list[i][j]
+            else:
+                j += 1
+        print('dropna finished')
         return new_main_list, new_appliances_list
 
     def store_classifier_instances(self):
@@ -269,11 +281,13 @@ class API():
 
         for i in gt_overall.columns:
             for clf in pred_overall:
-                if (os.path.exists(
-                        'result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image') == False):
+                if not os.path.exists('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image'):
                     os.makedirs('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image')
-                if (os.path.exists('result/' + self.storing_key + '/' + str(i)) == False):
+                if not os.path.exists('result/' + self.storing_key + '/' + str(i)):
                     os.makedirs('result/' + self.storing_key + '/' + str(i))
+                if not os.path.exists('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df'):
+                    os.makedirs('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df')
+
 
         print('section_plot:')
 
@@ -283,12 +297,41 @@ class API():
                 for clf in pred_overall:
                     pred = pred_overall[clf][i]
                     pred_df_list = get_sections_df(pred, self.test_sections)
-                    plt.figure()
-                    plt.plot(self.test_mains[j])
-                    plt.plot(gt_overall_list[j])
-                    plt.plot(pred_df_list[j])
+                    plt.figure(figsize=(6, 3))
+                    temp_test_main = self.test_mains[j]
+                    temp_gt_overall = gt_overall_list[j]
+                    temp_pred_df = pred_df_list[j]
+                    plt.plot(temp_test_main)
+                    plt.plot(temp_gt_overall)
+                    plt.plot(temp_pred_df)
                     plt.savefig('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image/' + str(
                         j) + '.png')
+                    plt.show()
+
+                    p = plt.figure(figsize=(6, 9))
+                    ax1 = p.add_subplot(3, 1, 1)
+                    ax1.plot(temp_test_main)
+                    plt.title('mains')
+                    ax2 = p.add_subplot(3, 1, 2)
+                    ax2.plot(temp_gt_overall)
+                    plt.title('appliance')
+                    ax3 = p.add_subplot(3, 1, 3)
+                    plt.title('predict')
+                    ax3.plot(temp_pred_df)
+                    plt.savefig(
+                        'result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image/' + '_' + str(
+                            j) + '.png')
+                    plt.show()
+
+                    temp_result = pd.DataFrame([], index=temp_pred_df.index, columns=['mains','gt','predict'])
+                    temp_result['mains'] = temp_test_main.values
+                    temp_result['gt'] = temp_gt_overall
+                    temp_result['predict'] = temp_pred_df
+
+                    temp_result.to_csv('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df/' + str(
+                            j) + '.csv')
+
+                    plt.show()
 
         for i in gt_overall.columns:
             temp_result = copy.deepcopy(config['result'])

@@ -138,6 +138,8 @@ class Seq2Seq(Disaggregator):
 
         test_predictions = []
         for test_mains_df in test_main_list:
+            # if test_mains_df.shape[0] < 100:
+            #     continue
 
             disggregation_dict = {}
             test_main_array = test_mains_df.values.reshape((-1, self.sequence_length, 1))
