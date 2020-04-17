@@ -259,10 +259,6 @@ class API():
                 del new_main_list[j]
                 for i in range(len(new_appliances_list)):
                     del new_appliances_list[i][j]
-            elif max(new_main_list[j]) < max(new_appliances_list[0][j]):
-                del new_main_list[j]
-                for i in range(len(new_appliances_list)):
-                    del new_appliances_list[i][j]
             else:
                 j += 1
         print('dropna finished')
