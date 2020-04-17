@@ -31,6 +31,7 @@ class NumpyEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 def get_activations(chunk, params):
     """Returns runs of an appliance.
 
@@ -71,9 +72,8 @@ def get_activations(chunk, params):
     switch_on_events = np.where(state_changes == 1)[0]
     switch_off_events = np.where(state_changes == -1)[0]
 
-
     if len(switch_on_events) == 0 or len(switch_off_events) == 0:
-        if(when_on[0]):
+        if (when_on[0]):
             state[:] = 1
             return [], state
         else:
@@ -108,9 +108,9 @@ def get_activations(chunk, params):
         # Now remove off_events and on_events
         switch_off_events = switch_off_events[
             np.concatenate([above_threshold_off_durations,
-                            [len(switch_off_events)-1]])]
+                            [len(switch_off_events) - 1]])]
         switch_on_events = switch_on_events[
-            np.concatenate([[0], above_threshold_off_durations+1])]
+            np.concatenate([[0], above_threshold_off_durations + 1])]
     assert len(switch_on_events) == len(switch_off_events)
 
     activations = []
@@ -130,20 +130,21 @@ def get_activations(chunk, params):
 
     return activations, state
 
+
 config = {
-    'threshold':{
-        'microwave':{'p': 50, 'N_off':10, 'N_on':10, 'border':1},
-        'fridge':{'p': 5, 'N_off':60, 'N_on':60, 'border':1},
-        'dish washer':{'p': 10, 'N_off':300, 'N_on':1800, 'border':1}
+    'threshold': {
+        'microwave': {'p': 50, 'N_off': 10, 'N_on': 10, 'border': 1},
+        'fridge': {'p': 5, 'N_off': 60, 'N_on': 60, 'border': 1},
+        'dish washer': {'p': 10, 'N_off': 300, 'N_on': 1800, 'border': 1}
     },
-    'result':{
-        'MSE':[],
-        'MAE':[],
-        'ACC':[],
-        'Precision':[],
-        'Recall':[],
-        'F1':[],
-        'sMAE':[]
+    'result': {
+        'MSE': [],
+        'MAE': [],
+        'ACC': [],
+        'Precision': [],
+        'Recall': [],
+        'F1': [],
+        'sMAE': []
     }
 }
 
@@ -152,6 +153,42 @@ def get_sections_df(chunk, good_section):
     result = []
     for section in good_section:
         temp = chunk[section.start:section.end]
-        if(temp.shape[0] > 1000):
+        if (temp.shape[0] > 1000):
             result.append(temp)
+    return result
+
+
+def get_sections_df_2(main_section, app_section):
+    result = []
+    index = pd.date_range(start=main_section[0].start, end=main_section[-1].end, freq='s')
+    test = pd.DataFrame(index=index)
+    test['mains'] = 0
+    test['apps'] = 0
+    # print('-')
+
+    for sec in main_section:
+        test.loc[sec.start:sec.end, 'mains'] = 1
+    # print('-')
+    for sec in app_section:
+        test.loc[sec.start:sec.end, 'apps'] = 1
+    # print('-')
+
+    test['all'] = 0
+    test['all'] = ((test['mains'] == 1) & (test['apps'] == 1)).astype(int)
+    test['start'] = test['all'].diff()
+    if test['all'].iloc[0] == 1:
+        test['start'].iloc[0] = 1
+
+    test['end'] = test['all'].diff().fillna(100)
+    test['end'] = test[['end']].apply(lambda x: x.shift(-1))
+    if test['all'].iloc[-1] == 1:
+        test['end'].iloc[-1] = -1
+    start_index = index[test['start'] == 1]
+    end_index = index[test['end'] == -1]
+
+    for i in range(len(start_index)):
+        start = start_index[i]
+        end = end_index[i]
+        if (end - start) / np.timedelta64(1, 's') > 3000:
+            result.append((start, end))
     return result

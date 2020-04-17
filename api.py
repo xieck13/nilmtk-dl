@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import datetime
 from IPython.display import clear_output
 from metrics import Metrics
-from disaggregate import config, get_activations, get_sections_df
+from disaggregate import config, get_activations, get_sections_df, get_sections_df_2
 import copy
 import joblib
 
@@ -66,7 +66,7 @@ class API():
         self.artificial_aggregate = params.get('artificial_aggregate', self.artificial_aggregate)
         self.activation_profile = params.get('activation_profile', config['threshold'])
         self.isState = params.get('isState', False)
-
+        self.sec_dict = {}
         self.experiment(params)
 
     def experiment(self, params):
@@ -124,14 +124,21 @@ class API():
                                                sample_period=self.sample_period))
                 # train_df = train_df[[list(train_df.columns)[0]]]
 
-                main_df_list = get_sections_df(main_df, good_sections)  # train_df
+                # main_df_list = get_sections_df(main_df, good_sections)  # train_df
                 appliance_readings = []
 
                 for appliance_name in self.appliances:
                     app_meter = train.buildings[building].elec[appliance_name]
                     app_df = next(app_meter.load(physical_quantity='power', ac_type=self.power['appliance'],
                                                  sample_period=self.sample_period))
-                    app_df_list = get_sections_df(app_df, good_sections)
+                    # app_df_list = get_sections_df(app_df, good_sections)
+
+                    if building not in self.sec_dict:
+                        self.sec_dict[building] = get_sections_df_2(good_sections, app_meter.good_sections())
+
+                    main_df_list = [main_df[sec[0]:sec[1]] for sec in self.sec_dict[building]]
+                    app_df_list = [app_df[sec[0]:sec[1]] for sec in self.sec_dict[building]]
+
                     appliance_readings.append(app_df_list)  # appliance_readings->app_df_list->app_df
 
                 if self.DROP_ALL_NANS:
@@ -176,7 +183,7 @@ class API():
                                 end=d[dataset]['buildings'][building]['end_time'])
                 test_meter = test.buildings[building].elec.mains()
                 good_sections = test.buildings[building].elec[self.appliances[0]].good_sections()
-                self.test_sections = good_sections
+                # self.test_sections = good_sections
                 main_df = next(test_meter.load(physical_quantity='power', ac_type=self.power['mains'],
                                                sample_period=self.sample_period))
 
@@ -185,9 +192,15 @@ class API():
 
                 for appliance_name in self.appliances:
                     app_meter = test.buildings[building].elec[appliance_name]
+
+                    if building not in self.sec_dict:
+                        self.sec_dict[building] = get_sections_df_2(good_sections, app_meter.good_sections())
+
                     app_df = next(app_meter.load(physical_quantity='power', ac_type=self.power['appliance'],
                                                  sample_period=self.sample_period))
-                    app_df_list = get_sections_df(app_df, good_sections)
+
+                    main_df_list = [main_df[sec[0]:sec[1]] for sec in self.sec_dict[building]]
+                    app_df_list = [app_df[sec[0]:sec[1]] for sec in self.sec_dict[building]]
                     appliance_readings.append(app_df_list)
 
                 if self.DROP_ALL_NANS:
@@ -212,7 +225,7 @@ class API():
                     self.test_submeters[j] = (appliance_name, test_submeters[j])
 
                 self.storing_key = str(dataset) + "_" + str(building)
-                self.call_predict(self.classifiers)
+                self.call_predict(self.classifiers, building)
 
     def dropna(self, mains_list, appliance_readings):
         """
@@ -261,7 +274,7 @@ class API():
                 print("\n\nThe method {model_name} specied does not exist. \n\n".format(model_name=name))
                 print(e)
 
-    def call_predict(self, classifiers):
+    def call_predict(self, classifiers, building):
         """
         This functions computers the predictions on the self.test_mains using all the trained models and then compares different learn't models using the metrics specified
         """
@@ -288,15 +301,17 @@ class API():
                 if not os.path.exists('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df'):
                     os.makedirs('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df')
 
-
         print('section_plot:')
 
+        sec_list = self.sec_dict[building]
+
         for i in gt_overall.columns:
-            gt_overall_list = get_sections_df(gt_overall[i], self.test_sections)
+            gt_overall_list = [gt_overall[i][sec[0]:sec[1]] for sec in sec_list]
+            # get_sections_df(gt_overall[i], self.test_sections)
             for j, gt in enumerate(gt_overall_list):
                 for clf in pred_overall:
                     pred = pred_overall[clf][i]
-                    pred_df_list = get_sections_df(pred, self.test_sections)
+                    pred_df_list = [pred[sec[0]:sec[1]] for sec in sec_list]
                     plt.figure(figsize=(6, 3))
                     temp_test_main = self.test_mains[j]
                     temp_gt_overall = gt_overall_list[j]
@@ -323,12 +338,13 @@ class API():
                             j) + '.png')
                     plt.show()
 
-                    temp_result = pd.DataFrame([], index=temp_pred_df.index, columns=['mains','gt','predict'])
+                    temp_result = pd.DataFrame([], index=temp_pred_df.index, columns=['mains', 'gt', 'predict'])
                     temp_result['mains'] = temp_test_main.values
                     temp_result['gt'] = temp_gt_overall
                     temp_result['predict'] = temp_pred_df
 
-                    temp_result.to_csv('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df/' + str(
+                    temp_result.to_csv(
+                        'result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df/' + str(
                             j) + '.csv')
 
                     plt.show()
