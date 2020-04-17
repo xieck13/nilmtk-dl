@@ -111,6 +111,7 @@ class API():
         # store the train_main readings for all buildings
         self.train_mains = []
         self.train_submeters = [[] for i in range(len(self.appliances))]
+        self.sec_dict = {}
         for dataset in d:
             print("Loading data for ", dataset, " dataset")
             train = DataSet(d[dataset]['path'])
@@ -119,7 +120,7 @@ class API():
                 train.set_window(start=d[dataset]['buildings'][building]['start_time'],
                                  end=d[dataset]['buildings'][building]['end_time'])
                 main_meter = train.buildings[building].elec.mains()
-                good_sections = train.buildings[building].elec[self.appliances[0]].good_sections()
+                good_sections = train.buildings[building].elec.mains().good_sections()
                 main_df = next(main_meter.load(physical_quantity='power', ac_type=self.power['mains'],
                                                sample_period=self.sample_period))
                 # train_df = train_df[[list(train_df.columns)[0]]]
@@ -175,6 +176,7 @@ class API():
         for dataset in d:
             print("Loading data for ", dataset, " dataset")
             test = DataSet(d[dataset]['path'])
+            self.sec_dict = {}
             for building in d[dataset]['buildings']:
                 self.test_mains = []
                 self.test_submeters = [[] for i in range(len(self.appliances))]
@@ -182,7 +184,7 @@ class API():
                 test.set_window(start=d[dataset]['buildings'][building]['start_time'],
                                 end=d[dataset]['buildings'][building]['end_time'])
                 test_meter = test.buildings[building].elec.mains()
-                good_sections = test.buildings[building].elec[self.appliances[0]].good_sections()
+                good_sections = test.buildings[building].elec.mains().good_sections()
                 # self.test_sections = good_sections
                 main_df = next(test_meter.load(physical_quantity='power', ac_type=self.power['mains'],
                                                sample_period=self.sample_period))
@@ -241,6 +243,9 @@ class API():
             # if mains_df.shape[0] < 10:
             #     continue
             for i in range(len(appliance_readings)):
+                if max(appliance_readings[i][j]) > max(mains_df):
+                    appliance_readings[i][j] = np.nan
+                    print('wrong')
                 appliance_readings[i][j] = appliance_readings[i][j].dropna()
             ix = mains_df.index
             for app_df in appliance_readings:
@@ -249,8 +254,12 @@ class API():
             for i, app_df in enumerate(appliance_readings):
                 new_appliances_list[i][j] = app_df[j].loc[ix]
         j = 0
-        while (j < len(new_main_list)):
-            if (new_main_list[j].shape[0] < 10):
+        while j < len(new_main_list):
+            if new_main_list[j].shape[0] < 99:
+                del new_main_list[j]
+                for i in range(len(new_appliances_list)):
+                    del new_appliances_list[i][j]
+            elif max(new_main_list[j]) < max(new_appliances_list[0][j]):
                 del new_main_list[j]
                 for i in range(len(new_appliances_list)):
                     del new_appliances_list[i][j]

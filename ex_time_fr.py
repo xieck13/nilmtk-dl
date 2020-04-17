@@ -4,10 +4,10 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-# path = 'D:/workspace/nilm/data/redd_data.h5'
-path = 'D:/workspace/nilm/code/databank/redd_data.h5'
+path = 'D:/workspace/nilm/data/redd_data.h5'
+# path = 'D:/workspace/nilm/code/databank/redd_data.h5'
 
-DEBUG = True
+DEBUG = False
 TEST = False
 
 
