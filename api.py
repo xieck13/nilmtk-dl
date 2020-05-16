@@ -326,7 +326,7 @@ class API():
                     plt.plot(temp_pred_df)
                     plt.savefig('result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image/' + str(
                         j) + '.png')
-                    plt.show()
+                    # plt.show()
 
                     p = plt.figure(figsize=(6, 9))
                     ax1 = p.add_subplot(3, 1, 1)
@@ -341,7 +341,7 @@ class API():
                     plt.savefig(
                         'result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_image/' + '_' + str(
                             j) + '.png')
-                    plt.show()
+                    # plt.show()
 
                     temp_result = pd.DataFrame([], index=temp_pred_df.index, columns=['mains', 'gt', 'predict'])
                     temp_result['mains'] = temp_test_main.values
@@ -352,7 +352,7 @@ class API():
                         'result/' + self.storing_key + '/' + str(i) + '/' + str(clf) + '/section_df/' + str(
                             j) + '.csv')
 
-                    plt.show()
+                    # plt.show()
 
         for i in gt_overall.columns:
             temp_result = copy.deepcopy(config['result'])
@@ -416,18 +416,40 @@ class API():
         # "ac_type" varies according to the dataset used. 
         # Make sure to use the correct ac_type before using the default parameters in this code.   
 
-        pred_list = clf.disaggregate_chunk(test_elec)
-
+        unvalid_pred_list = clf.disaggregate_chunk(test_elec)
+        pred_list = []
         # It might not have time stamps sometimes due to neural nets
         # It has the readings for all the appliances
 
+        # make the pred valid
+        len_list = []
+        for meter, data in test_submeters:
+            for d in data:
+                len_list.append(d.shape[0])
+            break
+        for i, pred in enumerate(unvalid_pred_list):
+            valid_pred = pred.iloc[:len_list[i], :]
+            pred_list.append(valid_pred)
+
+        for pred in pred_list:
+            print(pred.shape)
+
+
+
+
         concat_pred_df = pd.concat(pred_list, axis=0)
+        # print('='*40)
+        # print(concat_pred_df.shape)
+        # print('='*40)
 
         gt = {}
         for meter, data in test_submeters:
             concatenated_df_app = pd.concat(data, axis=0)
             index = concatenated_df_app.index
             gt[meter] = pd.Series(concatenated_df_app.values.flatten(), index=index)
+            # print('=' * 40)
+            # print(gt[meter].shape)
+            # print('=' * 40)
 
         gt_overall = pd.DataFrame(gt, dtype='float32')
         pred = {}
@@ -436,6 +458,9 @@ class API():
             # Neural nets do extra padding sometimes, to fit, so get rid of extra predictions
             app_series_values = app_series_values[:len(gt_overall[app_name])]
             pred[app_name] = pd.Series(app_series_values, index=gt_overall.index)
+            # print('=' * 40)
+            # print(pred[app_name].shape)
+            # print('=' * 40)
         pred_overall = pd.DataFrame(pred, dtype='float32')
         return gt_overall, pred_overall
 

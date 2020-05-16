@@ -5,10 +5,10 @@ import warnings
 warnings.filterwarnings("ignore")
 
 path = 'D:/workspace/nilm/data/redd_data.h5'
-# path = 'D:/workspace/nilm/code/databank/redd_data.h5'
+path = 'D:/workspace/nilm/code/databank/redd_data.h5'
 
 DEBUG = False
-TEST = False
+TEST = True
 
 
 def generate_method(debug, test):
@@ -17,7 +17,7 @@ def generate_method(debug, test):
             'DAE': DAE({'save-model-path': 'DAE', 'pretrained-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
             # 'RNN': RNN({'save-model-path': 'RNN', 'pretrained-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
             # 'Seq2Point': Seq2Point({'save-model-path': 'Seq2Point', 'pretrained-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
-            # 'Seq2Seq': Seq2Seq({'save-model-path': 'Seq2Seq', 'pretrained-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
+            # 'Seq2Seq': Seq2Seq({'save-model-path': 'Seq2Seq', 'pretraiTruened-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
             # 'GRU': WindowGRU({'save-model-path': 'GRU', 'pretrained-model-path': None, 'n_epochs': 1, 'batch_size': 256}),
         }
     else:
@@ -31,11 +31,11 @@ def generate_method(debug, test):
     if test:
         method = {
             'DAE': DAE({'save-model-path': 'DAE', 'pretrained-model-path': 'DAE', 'batch_size': 256}),
-            # 'RNN': RNN({'save-model-path': 'RNN', 'pretrained-model-path': 'RNN', 'batch_size': 256}),
-            # 'Seq2Point': Seq2Point(
-            #     {'save-model-path': 'Seq2Point', 'pretrained-model-path': 'Seq2Point', 'batch_size': 256}),
-            # 'Seq2Seq': Seq2Seq({'save-model-path': 'Seq2Seq', 'pretrained-model-path': 'Seq2Seq', 'batch_size': 256}),
-            # 'GRU': WindowGRU({'save-model-path': 'GRU', 'pretrained-model-path': 'GRU', 'batch_size': 256}),
+            'RNN': RNN({'save-model-path': 'RNN', 'pretrained-model-path': 'RNN', 'batch_size': 256}),
+            'Seq2Point': Seq2Point(
+                {'save-model-path': 'Seq2Point', 'pretrained-model-path': 'Seq2Point', 'batch_size': 256}),
+            'Seq2Seq': Seq2Seq({'save-model-path': 'Seq2Seq', 'pretrained-model-path': 'Seq2Seq', 'batch_size': 256}),
+            'GRU': WindowGRU({'save-model-path': 'GRU', 'pretrained-model-path': 'GRU', 'batch_size': 256}),
         }
     return method
 

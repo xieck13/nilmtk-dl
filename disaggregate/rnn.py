@@ -222,8 +222,11 @@ class RNN(Disaggregator):
             for mains in mains_lst:
                 new_mains = mains.values.flatten()
                 n = self.sequence_length
-                units_to_pad = n // 2
-                new_mains = np.pad(new_mains,(units_to_pad,units_to_pad),'constant',constant_values=(0,0))
+                # units_to_pad = n // 2
+                # new_mains = np.pad(new_mains,(units_to_pad,units_to_pad),'constant',constant_values=(0,0))
+                # new_mains = np.array([new_mains[i:i + n] for i in range(len(new_mains) - n + 1)])
+                units_to_pad = n - 1
+                new_mains = np.pad(new_mains,(units_to_pad,0),'constant',constant_values=(0,0))
                 new_mains = np.array([new_mains[i:i + n] for i in range(len(new_mains) - n + 1)])
                 new_mains = (new_mains - self.mains_mean) / self.mains_std
                 mains_df_list.append(pd.DataFrame(new_mains))
