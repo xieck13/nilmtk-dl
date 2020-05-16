@@ -9,6 +9,6 @@
 
 ex_time_\*.py与ex_house_\*.py是针对REDD数据集的实验配置文件范例，\*为电器简写。
 
-两个jupyter notebook是草稿本
+两个jupyter notebook是草稿本，可以无视。
 
 由于本人水平十分有限，代码可能有一些bug，有任何问题请联系xieck13@gmail.com
